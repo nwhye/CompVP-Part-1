@@ -100,5 +100,5 @@ def get_script_dir():
 if __name__ == "__main__":
     BASE = get_script_dir()
     MESH_DIRECTORY = os.path.join(BASE, "generated_objs")
-    OUTPUT_DIRECTORY = os.path.join(BASE, "..", "rendered_dataset")
+    OUTPUT_DIRECTORY = os.path.join(BASE, "../..", "rendered_dataset")
     batch_render_faces(MESH_DIRECTORY, os.path.normpath(OUTPUT_DIRECTORY))
