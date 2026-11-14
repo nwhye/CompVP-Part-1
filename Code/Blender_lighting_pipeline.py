@@ -52,8 +52,8 @@ def batch_render_faces(mesh_dir, output_dir):
     light_positions = [
         (1.5, -1.0, 1.2),    # side key
         (-1.5, -1.0, 1.2),   # opposite side key
-        (0.0, -1.0, 2.0),    # top
-        (0.0, -1.5, -1.5),   # under-lighting
+        #(0.0, -1.0, 2.0),    # top
+        #(0.0, -1.5, -1.5),   # under-lighting
     ]
 
     os.makedirs(os.path.join(output_dir, "original"), exist_ok=True)

@@ -11,7 +11,7 @@ PROJECT_DIR = BASE_DIR.parent
 MODEL_DIR = PROJECT_DIR / "Code" / "src"
 
 
-def create_random_face_dataset(num_samples=100, output_dir=str(BASE_DIR / "generated_objs")):
+def create_random_face_dataset(num_samples=50, output_dir=str(BASE_DIR / "generated_objs")):  #n_sampless = 50, cuz later two lighing angles will be ussed for each
     os.makedirs(output_dir, exist_ok=True)
 
     config = SimpleNamespace(
@@ -64,4 +64,4 @@ trimesh.load("generated_objs/face_0021.obj").show()
 
 
 if __name__ == "__main__":
-    create_random_face_dataset(num_samples=100, output_dir="./generated_objs")
+    create_random_face_dataset(num_samples=50, output_dir="./generated_objs")
