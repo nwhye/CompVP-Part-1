@@ -66,7 +66,6 @@ if __name__ == "__main__":
         )
         t = otsu_threshold
         otsus.append(t)
-        #t = 0.75
         binary_mask = image > t
         fig, ax = plt.subplots()
         ax.imshow(binary_mask, cmap="gray")
@@ -76,5 +75,3 @@ if __name__ == "__main__":
         iio.imwrite(save_path, mooney_uint8)
     plt.hist(otsus, bins=256)
     plt.show()
-
-##TODO Decide between auto and manual threshold by testing on recognition models
