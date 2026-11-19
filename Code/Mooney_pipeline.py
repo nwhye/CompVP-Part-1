@@ -1,77 +1,87 @@
-﻿import os
+﻿#!/usr/bin/env python3
+import argparse
+import sys
+from pathlib import Path
+
 import imageio.v3 as iio
-import matplotlib.pyplot as plt
-import skimage as ski
 import numpy as np
+import skimage as ski
+
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
 
 
-def otsu_intraclass_variance(image, threshold):
-    """
-    Otsu's intra-class variance.
-    """
-    return np.nansum(
-        [
-            np.mean(cls) * np.var(image, where=cls)
-            for cls in [image >= threshold, image < threshold]
-        ]
-    )
-
-
-def preprocess(uri):
-    image = iio.imread(uri=uri)
+def to_gray(image):
+    if image.ndim == 3 and image.shape[-1] == 1:
+        image = image[..., 0]
+    if image.ndim == 2:
+        return ski.util.img_as_float(image)
     if image.shape[-1] == 4:
         image = ski.color.rgba2rgb(image)
+    return ski.color.rgb2gray(image)
 
-    # fig, ax = plt.subplots()
-    # # ax.imshow(image)
-    # # plt.show()
 
-    sigma = 2.0
+def make_mooney(path, blur, use_smart, manual_threshold):
+    gray = to_gray(iio.imread(path))
+    if blur > 0:
+        gray = ski.filters.gaussian(gray, sigma=blur, truncate=3.5)
+    t = ski.filters.threshold_otsu(gray) if use_smart else manual_threshold
+    mooney = ((gray > t) * 255).astype(np.uint8)
+    return mooney, float(t)
 
-    blurred = ski.filters.gaussian(
-        image, sigma=(sigma, sigma), truncate=3.5, channel_axis=-1)
-    # fig, ax = plt.subplots()
-    # # ax.imshow(blurred)
-    # # plt.show()
 
-    gray_face = ski.color.rgb2gray(blurred)
+def parse_args():
+    p = argparse.ArgumentParser(description="Source images to Mooney images.")
+    p.add_argument("-i", "--input", default="./out/original",
+                   help="source folder (default: %(default)s)")
+    p.add_argument("-o", "--output", default="./out/mooney",
+                   help="output folder (default: %(default)s)")
+    p.add_argument("-b", "--blur", type=float, default=2.0,
+                   help="Gaussian sigma value in pixels (default: %(default)s)")
+    p.add_argument("--smart", action=argparse.BooleanOptionalAction, default=True,
+                   help="smart threshold via Otsu's method; use --no-smart to turn off "
+                        "(default: on)")
+    p.add_argument("-t", "--threshold", type=float, default=None,
+                   help="manual threshold between 0 and 1, providing it turns smart threshold off. ")
+    return p.parse_args()
 
-    # fig, ax = plt.subplots()
-    # ax.imshow(gray_face, cmap="gray")
-    # plt.show()
 
-    # histogram, bin_edges = np.histogram(gray_face, bins=256, range=(0.0, 1.0))
-    #
-    # fig, ax = plt.subplots()
-    # ax.plot(bin_edges[0:-1], histogram)
-    # ax.set_title("Grayscale Histogram")
-    # ax.set_xlabel("grayscale value")
-    # ax.set_ylabel("pixels")
-    # ax.set_xlim(0, 1.0)
-    # plt.show()
+def main():
+    args = parse_args()
 
-    return gray_face
+    in_dir, out_dir = Path(args.input), Path(args.output)
+    if not in_dir.is_dir():
+        sys.exit(f"Input folder not found: {in_dir}")
+    if args.blur < 0:
+        sys.exit("--blur must be >= 0")
+    if args.threshold is not None and not 0.0 <= args.threshold <= 1.0:
+        sys.exit("--threshold must be between 0 and 1")
+
+    use_smart = args.smart and args.threshold is None
+
+    if args.threshold is None:
+        manual = 0.5
+    else:
+        manual = args.threshold
+
+    files = sorted(f for f in in_dir.iterdir() if f.suffix.lower() in IMAGE_EXTS)
+    if not files:
+        sys.exit(f"No images found in {in_dir}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    mode = "smart (Otsu)" if use_smart else f"manual ({manual:g})"
+    print(f"{len(files)} images / blur sigma={args.blur:g} / threshold: {mode}")
+
+    thresholds = []
+    for f in files:
+        mooney, t = make_mooney(f, args.blur, use_smart, manual)
+        thresholds.append(t)
+        iio.imwrite(out_dir / f"{f.stem}.png", mooney)
+        print(f"  {f.name}: threshold={t:.3f}")
+
+    print(f"Succesfuly processed all images. Saved to {out_dir} "
+          f"(threshold min/mean/max: {min(thresholds):.3f} / "
+          f"{np.mean(thresholds):.3f} / {max(thresholds):.3f})")
 
 
 if __name__ == "__main__":
-    input_dir = "./out/original"
-    output_dir = "./out/mooney_otsu"
-    os.makedirs(output_dir, exist_ok=True)
-    otsus = []
-    for filename in os.listdir(input_dir):
-        image = preprocess(os.path.join(input_dir, filename))
-        otsu_threshold = min(
-            np.linspace(np.min(image), np.max(image), 256),
-            key=lambda th: otsu_intraclass_variance(image, th),
-        )
-        t = otsu_threshold
-        otsus.append(t)
-        binary_mask = image > t
-        fig, ax = plt.subplots()
-        ax.imshow(binary_mask, cmap="gray")
-        plt.show()
-        mooney_uint8 = (binary_mask * 255).astype(np.uint8)
-        save_path = os.path.join(output_dir, filename)
-        iio.imwrite(save_path, mooney_uint8)
-    plt.hist(otsus, bins=256)
-    plt.show()
+    main()
