@@ -3,8 +3,8 @@ import cv2, yaml, numpy as np, torch
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.join(BASE, "3DDFA_V2")
-IN_DIR = os.path.join(BASE, "out", "mooney_otsu")
-OUT_DIR = os.path.join(BASE, "out", "model_outputs", "3ddfa")
+IN_DIR = os.path.join(BASE, "out", "original")
+OUT_DIR = os.path.join(BASE, "out", "model_outputs", "3ddfa" "normal")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 sys.path.insert(0, REPO)
