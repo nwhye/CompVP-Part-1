@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env python3
 import argparse
 import sys
+import warnings
 from pathlib import Path
 
 import imageio.v3 as iio
@@ -8,6 +9,27 @@ import numpy as np
 import skimage as ski
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
+
+
+def otsu_intraclass_variance(image, threshold):
+    """
+    Otsu's intra-class variance.
+    """
+    return np.nansum(
+        [
+            np.mean(cls) * np.var(image, where=cls)
+            for cls in [image >= threshold, image < threshold]
+        ]
+    )
+
+
+def otsu_threshold(image):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        return min(
+            np.linspace(np.min(image), np.max(image), 256),
+            key=lambda th: otsu_intraclass_variance(image, th),
+        )
 
 
 def to_gray(image):
@@ -24,7 +46,7 @@ def make_mooney(path, blur, use_smart, manual_threshold):
     gray = to_gray(iio.imread(path))
     if blur > 0:
         gray = ski.filters.gaussian(gray, sigma=blur, truncate=3.5)
-    t = ski.filters.threshold_otsu(gray) if use_smart else manual_threshold
+    t = otsu_threshold(gray) if use_smart else manual_threshold
     mooney = ((gray > t) * 255).astype(np.uint8)
     return mooney, float(t)
 
