@@ -6,8 +6,8 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 ADA = os.path.join(BASE, "AdaFace")
 CKPT = os.path.join(ADA, "pretrained", "adaface_ir101_webface12m.ckpt")
 ARCH = "ir_101"
-IN_DIR = os.path.join(BASE, "out", "mooney_otsu")
-OUT_DIR = os.path.join(BASE, "out", "model_outputs", "adaface")
+IN_DIR = os.path.join(BASE, "out", "original")
+OUT_DIR = os.path.join(BASE, "out", "model_outputs", "adaface", "normal")
 CROP_FRAC = 0.8
 os.makedirs(OUT_DIR, exist_ok=True)
 
