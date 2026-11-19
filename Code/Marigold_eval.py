@@ -4,8 +4,8 @@ import torch
 import diffusers
 from PIL import Image
 
-IN_DIR = "./out/mooney_otsu"
-OUT_DIR = "./out/model_outputs/marigold"
+IN_DIR = "./out/original"
+OUT_DIR = "./out/model_outputs/marigold/normal"
 NORMALS_DIR = os.path.join(OUT_DIR, "normals")
 ALBEDO_DIR = os.path.join(OUT_DIR, "albedo")
 os.makedirs(NORMALS_DIR, exist_ok=True)
